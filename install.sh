@@ -61,4 +61,6 @@ if [ "$(uname -s)" = Darwin ] && ! "$bin" doctor --json 2>/dev/null | grep -q '"
     echo "nohup: Remote Login is off. Turn it on in System Settings → General → Sharing → Remote Login, then run: nohupctl pair"
     exit 0
 fi
-exec "$bin" pair
+# stdin is the pipe this script came through; the pane takes its keys from the terminal.
+[ -t 1 ] || { echo "nohup: no terminal here; run nohupctl pair from one."; exit 0; }
+exec "$bin" pair </dev/tty
