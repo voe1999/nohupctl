@@ -49,6 +49,7 @@ fi
 mkdir -p "$home/.local/bin"
 ln -sfn "$bin" "$link"
 "$bin" postinstall >/dev/null 2>&1 || true
+"$bin" setup >/dev/null 2>&1 || true
 echo "nohup: installed $("$bin" version | sed 's/.*"version":"\([^"]*\)".*/nohupctl \1/') at $bin"
 case ":${PATH:-}:" in
     *":$home/.local/bin:"*) ;;
