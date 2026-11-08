@@ -31,10 +31,18 @@ curl -fsSL -o "$tmp/checksums.txt" "$release/checksums.txt" || { echo "nohup: co
 expected=$(grep " $asset\$" "$tmp/checksums.txt" | cut -d' ' -f1)
 [ -n "$expected" ] || { echo "nohup: the latest release has no $asset yet." >&2; exit 1; }
 
-# Already this version (the app installs the same build): nothing to download.
-latest=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "$release/checksums.txt" 2>/dev/null | sed -n 's|.*/host-cli-v\([0-9.]*\)/.*|\1|p')
+# Already this build (the app installs the same one): nothing to download.
+# Releases are tagged v<version>.<build>, "v1.0.58" for nohupctl 1.0 (58).
+latest=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "$release/checksums.txt" 2>/dev/null | sed -n 's|.*/v\([0-9.]*\)/.*|\1|p')
+# `version` prints {"build":58,…,"version":"1.0"}: "1.0.58" for the tag, "1.0 (58)" to say.
+said() { "$bin" version 2>/dev/null; }
+build_of() { sed -n 's/.*"build":\([0-9]*\).*/\1/p'; }
+version_of() { sed -n 's/.*"version":"\([^"]*\)".*/\1/p'; }
 current=""
-[ -x "$bin" ] && current=$("$bin" version 2>/dev/null | sed 's/.*"version":"\([^"]*\)".*/\1/')
+if [ -x "$bin" ]; then
+    current="$(said | version_of)"
+    b="$(said | build_of)"; [ -n "$b" ] && current="$current.$b"
+fi
 if [ -z "$latest" ] || [ "$current" != "$latest" ]; then
     echo "nohup: downloading nohupctl ($asset)…"
     curl -fsSL -o "$tmp/$asset" "$release/$asset"
@@ -50,7 +58,8 @@ mkdir -p "$home/.local/bin"
 ln -sfn "$bin" "$link"
 "$bin" postinstall >/dev/null 2>&1 || true
 "$bin" setup >/dev/null 2>&1 || true
-echo "nohup: installed $("$bin" version | sed 's/.*"version":"\([^"]*\)".*/nohupctl \1/') at $bin"
+b="$(said | build_of)"
+echo "nohup: installed nohupctl $(said | version_of)${b:+ ($b)} at $bin"
 case ":${PATH:-}:" in
     *":$home/.local/bin:"*) ;;
     *) echo "nohup: add ~/.local/bin to your PATH to run nohupctl by name." ;;
