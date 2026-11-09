@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installs nohupctl, Nohup's host CLI, on this machine and shows a pairing
+# Installs nohupctl on this machine and shows a pairing
 # code for the Nohup app:
 #
 #   curl -fsSL https://nohup.carywang.workers.dev/install.sh | sh
